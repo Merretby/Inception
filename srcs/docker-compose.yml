@@ -1,0 +1,69 @@
+version: '3'
+
+volumes:
+  mariadb:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/moer-ret/data/mariadb
+    name: db_volume
+  wordpress:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/moer-ret/data/wordpress
+    name: wp_volume
+  
+networks:
+  mynetwork:
+    driver: bridge
+
+services:
+  nginx:
+    container_name: nginx
+    env_file:
+      - .env
+    volumes:
+      - wordpress:/var/www/html
+    build:
+      context: ./incep/nginx/
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    restart : on-failure
+    networks:
+      - mynetwork
+  
+  wordpress:
+    container_name: wordpress
+    env_file:
+      - .env
+    volumes:
+      - wordpress:/var/www/html
+    build:
+      context: ./incep/wordpress/
+    depends_on:
+      - mariadb
+    restart : on-failure
+    networks:
+      - mynetwork
+
+  mariadb:
+    container_name: mariadb
+    env_file:
+      - .env
+    volumes:
+      - mariadb:/var/lib/mysql
+    build:
+      context: ./incep/mariadb/
+      args:
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD : ${MYSQL_PASSWORD}
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    restart : unless-stopped
+    networks:
+      - mynetwork

@@ -1,0 +1,17 @@
+FROM debian:bullseye
+
+RUN apt update -y && apt upgrade -y && apt-get install -y php7.4 php-fpm php-mysql mariadb-client curl
+
+WORKDIR /var/www/html/
+
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+
+RUN chmod +x wp-cli.phar && mv wp-cli.phar /usr/local/bin/wp
+
+COPY ./tools/script.sh .
+
+RUN chmod +x script.sh
+
+RUN service php7.4-fpm start
+
+CMD [ "./script.sh" ]
